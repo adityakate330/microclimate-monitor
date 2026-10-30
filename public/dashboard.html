@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MicroClimate Monitor – Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <!-- ═══════════ TOAST CONTAINER ═══════════ -->
+  <div id="toast-container"></div>
+
+  <!-- ═══════════ ALERT BANNER ═══════════ -->
+  <div id="alert-banner" class="alert-banner hidden">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span id="alert-banner-text"></span>
+    <button onclick="dismissBanner()" class="banner-close"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-icon">🌱</span>
+        <span class="logo-text">MicroClimate</span>
+      </div>
+      <button id="sidebar-close" class="sidebar-close"><i class="fas fa-times"></i></button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="home">
+        <i class="fas fa-house"></i><span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-page="temperature">
+        <i class="fas fa-temperature-half"></i><span>Temperature</span>
+      </a>
+      <a href="#" class="nav-item" data-page="humidity">
+        <i class="fas fa-droplet"></i><span>Humidity</span>
+      </a>
+      <a href="#" class="nav-item" data-page="soil">
+        <i class="fas fa-seedling"></i><span>Soil Moisture</span>
+      </a>
+      <a href="#" class="nav-item" data-page="alerts">
+        <i class="fas fa-bell"></i><span>Alerts</span>
+        <span id="alert-badge" class="badge hidden">0</span>
+      </a>
+      <a href="#" class="nav-item" data-page="history">
+        <i class="fas fa-chart-line"></i><span>History</span>
+      </a>
+      <a href="#" class="nav-item" data-page="settings">
+        <i class="fas fa-gear"></i><span>Settings</span>
+      </a>
+      <a href="#" class="nav-item" data-page="profile">
+        <i class="fas fa-user"></i><span>Profile</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <small>Powered by Arduino</small>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN CONTENT ═══════════ -->
+  <main id="main-content" class="main-content">
+
+    <!-- ── TOP BAR ── -->
+    <header class="topbar">
+      <button id="hamburger" class="hamburger"><i class="fas fa-bars"></i></button>
+      <div class="topbar-status" id="connection-status">
+        <span class="status-dot disconnected"></span>
+        <span class="status-text">Checking…</span>
+      </div>
+      <div class="topbar-actions">
+        <button id="theme-toggle" class="icon-btn" title="Toggle theme">
+          <i class="fas fa-moon"></i>
+        </button>
+        <div class="user-menu" id="user-menu">
+          <button class="icon-btn user-btn" id="user-menu-btn">
+            <i class="fas fa-user-circle"></i>
+            <span id="topbar-username"></span>
+          </button>
+          <div class="user-dropdown hidden" id="user-dropdown">
+            <a href="#" data-page="profile"><i class="fas fa-user"></i> Profile</a>
+            <a href="#" data-page="settings"><i class="fas fa-gear"></i> Settings</a>
+            <hr>
+            <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ═══════════ PAGE: HOME / DASHBOARD ═══════════ -->
+    <section id="page-home" class="page active">
+      <h1 class="page-title">Dashboard <span class="page-subtitle">Real-time monitoring</span></h1>
+
+      <!-- Live Metric Cards -->
+      <div class="metrics-grid">
+        <!-- Temperature Card -->
+        <div class="glass-card metric-card" id="card-temp">
+          <div class="metric-header">
+            <i class="fas fa-temperature-half metric-icon temp-icon"></i>
+            <span class="metric-label">Temperature</span>
+          </div>
+          <div class="gauge-container">
+            <svg class="gauge" viewBox="0 0 160 160">
+              <circle class="gauge-bg" cx="80" cy="80" r="70" />
+              <circle class="gauge-fill" id="gauge-temp" cx="80" cy="80" r="70" />
+            </svg>
+            <div class="gauge-value">
+              <span class="value" id="val-temp">--</span>
+              <span class="unit" id="unit-temp">°C</span>
+            </div>
+          </div>
+          <div class="metric-status">
+            <span class="status-badge normal" id="status-temp">Waiting…</span>
+          </div>
+        </div>
+
+        <!-- Humidity Card -->
+        <div class="glass-card metric-card" id="card-hum">
+          <div class="metric-header">
+            <i class="fas fa-droplet metric-icon hum-icon"></i>
+            <span class="metric-label">Humidity</span>
+          </div>
+          <div class="gauge-container">
+            <svg class="gauge" viewBox="0 0 160 160">
+              <circle class="gauge-bg" cx="80" cy="80" r="70" />
+              <circle class="gauge-fill" id="gauge-hum" cx="80" cy="80" r="70" />
+            </svg>
+            <div class="gauge-value">
+              <span class="value" id="val-hum">--</span>
+              <span class="unit">%</span>
+            </div>
+          </div>
+          <div class="metric-status">
+            <span class="status-badge normal" id="status-hum">Waiting…</span>
+          </div>
+        </div>
+
+        <!-- Soil Moisture Card -->
+        <div class="glass-card metric-card" id="card-soil">
+          <div class="metric-header">
+            <i class="fas fa-seedling metric-icon soil-icon"></i>
+            <span class="metric-label">Soil Moisture</span>
+          </div>
+          <div class="gauge-container">
+            <svg class="gauge" viewBox="0 0 160 160">
+              <circle class="gauge-bg" cx="80" cy="80" r="70" />
+              <circle class="gauge-fill" id="gauge-soil" cx="80" cy="80" r="70" />
+            </svg>
+            <div class="gauge-value">
+              <span class="value" id="val-soil">--</span>
+              <span class="unit">%</span>
+            </div>
+          </div>
+          <div class="metric-status">
+            <span class="status-badge normal" id="status-soil">Waiting…</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Chart -->
+      <div class="glass-card chart-card">
+        <div class="card-header">
+          <h2><i class="fas fa-chart-area"></i> Live Readings</h2>
+          <span class="chart-info">Last 30 readings</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="live-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Alerts -->
+      <div class="glass-card alerts-preview">
+        <div class="card-header">
+          <h2><i class="fas fa-bell"></i> Recent Alerts</h2>
+          <a href="#" class="link-btn" data-page="alerts">View All →</a>
+        </div>
+        <div id="recent-alerts-list" class="alerts-list">
+          <div class="empty-state"><i class="fas fa-check-circle"></i> No recent alerts</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ PAGE: TEMPERATURE ═══════════ -->
+    <section id="page-temperature" class="page">
+      <h1 class="page-title"><i class="fas fa-temperature-half"></i> Temperature <span class="page-subtitle">Detailed view</span></h1>
+
+      <div class="detail-top">
+        <div class="glass-card detail-gauge-card">
+          <div class="gauge-container large">
+            <svg class="gauge" viewBox="0 0 200 200">
+              <circle class="gauge-bg" cx="100" cy="100" r="88" />
+              <circle class="gauge-fill" id="gauge-temp-detail" cx="100" cy="100" r="88" />
+            </svg>
+            <div class="gauge-value">
+              <span class="value large" id="val-temp-detail">--</span>
+              <span class="unit" id="unit-temp-detail">°C</span>
+            </div>
+          </div>
+          <span class="status-badge normal" id="status-temp-detail">Waiting…</span>
+        </div>
+        <div class="stats-grid">
+          <div class="glass-card stat-card"><div class="stat-label">Current</div><div class="stat-value" id="stat-temp-current">--</div></div>
+          <div class="glass-card stat-card"><div class="stat-label">Min (1h)</div><div class="stat-value" id="stat-temp-min">--</div></div>
+          <div class="glass-card stat-card"><div class="stat-label">Max (1h)</div><div class="stat-value" id="stat-temp-max">--</div></div>
+          <div class="glass-card stat-card"><div class="stat-label">Average (1h)</div><div class="stat-value" id="stat-temp-avg">--</div></div>
+        </div>
+      </div>
+
+      <div class="glass-card chart-card">
+        <div class="card-header">
+          <h2>Temperature History</h2>
+          <div class="range-btns">
+            <button class="range-btn active" data-range="1h" data-chart="temp">1H</button>
+            <button class="range-btn" data-range="6h" data-chart="temp">6H</button>
+            <button class="range-btn" data-range="24h" data-chart="temp">24H</button>
+            <button class="range-btn" data-range="7d" data-chart="temp">7D</button>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="temp-history-chart"></canvas></div>
+      </div>
+
+      <div class="glass-card threshold-info">
+        <i class="fas fa-shield-halved"></i>
+        Safe range: <strong id="temp-range-text">15°C – 35°C</strong>
+        <a href="#" class="link-btn" data-page="settings">Edit →</a>
+      </div>
+    </section>
+
+    <!-- ═══════════ PAGE: HUMIDITY ═══════════ -->
+    <section id="page-humidity" class="page">
+      <h1 class="page-title"><i class="fas fa-droplet"></i> Humidity <span class="page-subtitle">Detailed view</span></h1>
+
+      <div class="detail-top">
+        <div class="glass-card detail-gauge-card">
+          <div class="gauge-container large">
+            <svg class="gauge" viewBox="0 0 200 200">
+              <circle class="gauge-bg" cx="100" cy="100" r="88" />
+              <circle class="gauge-fill" id="gauge-hum-detail" cx="100" cy="100" r="88" />
+            </svg>
+            <div class="gauge-value">
+              <span class="value large" id="val-hum-detail">--</span>
+              <span class="unit">%</span>
+            </div>
+          </div>
+          <span class="status-badge normal" id="status-hum-detail">Waiting…</span>
+        </div>
+        <div class="stats-grid">
+          <div class="glass-card stat-card"><div class="stat-label">Current</div><div class="stat-value" id="stat-hum-current">--</div></div>
+          <div class="glass-card stat-card"><div class="stat-label">Min (1h)</div><div class="stat-value" id="stat-hum-min">--</div></div>
+          <div class="glass-card stat-card"><div class="stat-label">Max (1h)</div><div class="stat-value" id="stat-hum-max">--</div></div>
+          <div class="glass-card stat-card"><div class="stat-label">Average (1h)</div><div class="stat-value" id="stat-hum-avg">--</div></div>
+        </div>
+      </div>
+
+      <div class="glass-card chart-card">
+        <div class="card-header">
+          <h2>Humidity History</h2>
+          <div class="range-btns">
+            <button class="range-btn active" data-range="1h" data-chart="hum">1H</button>
+            <button class="range-btn" data-range="6h" data-chart="hum">6H</button>
+            <button class="range-btn" data-range="24h" data-chart="hum">24H</button>
+            <button class="range-btn" data-range="7d" data-chart="hum">7D</button>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="hum-history-chart"></canvas></div>
+      </div>
+
+      <div class="glass-card threshold-info">
+        <i class="fas fa-shield-halved"></i>
+        Safe range: <strong id="hum-range-text">30% – 80%</strong>
+        <a href="#" class="link-btn" data-page="settings">Edit →</a>
+      </div>
+    </section>
+
+    <!-- ═══════════ PAGE: SOIL MOISTURE ═══════════ -->
+    <section id="page-soil" class="page">
+      <h1 class="page-title"><i class="fas fa-seedling"></i> Soil Moisture <span class="page-subtitle">Detailed view</span></h1>
+
+      <div class="detail-top">
+        <div class="glass-card detail-gauge-card">
+          <div class="gauge-container large">
+            <svg class="gauge" viewBox="0 0 200 200">
+              <circle class="gauge-bg" cx="100" cy="100" r="88" />
+              <circle class="gauge-fill" id="gauge-soil-detail" cx="100" cy="100" r="88" />
+            </svg>
+            <div class="gauge-value">
+              <span class="value large" id="val-soil-detail">--</span>
+              <span class="unit">%</span>
+            </div>
+          </div>
+          <span class="status-badge normal" id="status-soil-detail">Waiting…</span>
+        </div>
+        <div class="stats-grid">
+          <div class="glass-card stat-card"><div class="stat-label">Current</div><div class="stat-value" id="stat-soil-current">--</div></div>
+          <div class="glass-card stat-card"><div class="stat-label">Min (1h)</div><div class="stat-value" id="stat-soil-min">--</div></div>
+          <div class="glass-card stat-card"><div class="stat-label">Max (1h)</div><div class="stat-value" id="stat-soil-max">--</div></div>
+          <div class="glass-card stat-card"><div class="stat-label">Average (1h)</div><div class="stat-value" id="stat-soil-avg">--</div></div>
+        </div>
+      </div>
+
+      <!-- Soil Status Card -->
+      <div class="glass-card soil-status-card" id="soil-status-card">
+        <div class="soil-status-icon" id="soil-status-icon">🌿</div>
+        <div class="soil-status-text" id="soil-status-text">Optimal – Soil moisture is healthy</div>
+        <div class="soil-status-suggestion" id="soil-suggestion">No action needed.</div>
+      </div>
+
+      <div class="glass-card chart-card">
+        <div class="card-header">
+          <h2>Soil Moisture History</h2>
+          <div class="range-btns">
+            <button class="range-btn active" data-range="1h" data-chart="soil">1H</button>
+            <button class="range-btn" data-range="6h" data-chart="soil">6H</button>
+            <button class="range-btn" data-range="24h" data-chart="soil">24H</button>
+            <button class="range-btn" data-range="7d" data-chart="soil">7D</button>
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="soil-history-chart"></canvas></div>
+      </div>
+
+      <div class="glass-card threshold-info">
+        <i class="fas fa-shield-halved"></i>
+        Safe range: <strong id="soil-range-text">30% – 70%</strong>
+        <a href="#" class="link-btn" data-page="settings">Edit →</a>
+      </div>
+    </section>
+
+    <!-- ═══════════ PAGE: ALERTS ═══════════ -->
+    <section id="page-alerts" class="page">
+      <h1 class="page-title"><i class="fas fa-bell"></i> Alerts & Warnings <span class="page-subtitle">Threshold violations log</span></h1>
+
+      <div class="alerts-toolbar glass-card">
+        <div class="filter-group">
+          <label>Parameter:</label>
+          <select id="alert-filter-param">
+            <option value="all">All</option>
+            <option value="Temperature">Temperature</option>
+            <option value="Humidity">Humidity</option>
+            <option value="Soil Moisture">Soil Moisture</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Severity:</label>
+          <select id="alert-filter-severity">
+            <option value="all">All</option>
+            <option value="critical">Critical</option>
+            <option value="warning">Warning</option>
+          </select>
+        </div>
+        <button class="btn btn-danger" id="clear-alerts-btn">
+          <i class="fas fa-trash"></i> Clear All
+        </button>
+      </div>
+
+      <div id="alerts-full-list" class="alerts-list full">
+        <div class="empty-state"><i class="fas fa-check-circle"></i> No alerts – all parameters are within safe ranges</div>
+      </div>
+    </section>
+
+    <!-- ═══════════ PAGE: HISTORY / ANALYTICS ═══════════ -->
+    <section id="page-history" class="page">
+      <h1 class="page-title"><i class="fas fa-chart-line"></i> History & Analytics <span class="page-subtitle">Explore past data</span></h1>
+
+      <div class="glass-card history-controls">
+        <div class="range-btns">
+          <button class="range-btn active" data-range="1h" data-chart="history">1H</button>
+          <button class="range-btn" data-range="6h" data-chart="history">6H</button>
+          <button class="range-btn" data-range="24h" data-chart="history">24H</button>
+          <button class="range-btn" data-range="7d" data-chart="history">7D</button>
+        </div>
+        <div class="custom-range">
+          <label>From: <input type="datetime-local" id="history-start"></label>
+          <label>To: <input type="datetime-local" id="history-end"></label>
+          <button class="btn btn-primary" id="history-custom-btn">Apply</button>
+        </div>
+        <button class="btn btn-secondary" id="export-csv-btn">
+          <i class="fas fa-download"></i> Export CSV
+        </button>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="history-stats-grid">
+        <div class="glass-card stat-card">
+          <div class="stat-label"><i class="fas fa-temperature-half"></i> Avg Temp</div>
+          <div class="stat-value" id="hist-avg-temp">--</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-label"><i class="fas fa-droplet"></i> Avg Humidity</div>
+          <div class="stat-value" id="hist-avg-hum">--</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-label"><i class="fas fa-seedling"></i> Avg Soil</div>
+          <div class="stat-value" id="hist-avg-soil">--</div>
+        </div>
+      </div>
+
+      <div class="glass-card chart-card">
+        <div class="card-header"><h2>Historical Data</h2></div>
+        <div class="chart-wrapper"><canvas id="history-chart"></canvas></div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-header">
+          <h2>Data Table</h2>
+          <span class="chart-info" id="history-count">0 readings</span>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Temperature</th>
+                <th>Humidity</th>
+                <th>Soil Moisture</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <tr><td colspan="4" class="empty-state">No data loaded</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ PAGE: SETTINGS ═══════════ -->
+    <section id="page-settings" class="page">
+      <h1 class="page-title"><i class="fas fa-gear"></i> Settings <span class="page-subtitle">Configure your monitor</span></h1>
+
+      <div class="settings-grid">
+        <!-- Thresholds -->
+        <div class="glass-card settings-section">
+          <h3><i class="fas fa-sliders"></i> Alert Thresholds</h3>
+          <div class="threshold-row">
+            <label>🌡 Temperature (°C)</label>
+            <div class="range-inputs">
+              <input type="number" id="set-temp-min" placeholder="Min" step="0.5">
+              <span>to</span>
+              <input type="number" id="set-temp-max" placeholder="Max" step="0.5">
+            </div>
+          </div>
+          <div class="threshold-row">
+            <label>💧 Humidity (%)</label>
+            <div class="range-inputs">
+              <input type="number" id="set-hum-min" placeholder="Min" step="1">
+              <span>to</span>
+              <input type="number" id="set-hum-max" placeholder="Max" step="1">
+            </div>
+          </div>
+          <div class="threshold-row">
+            <label>🌿 Soil Moisture (%)</label>
+            <div class="range-inputs">
+              <input type="number" id="set-soil-min" placeholder="Min" step="1">
+              <span>to</span>
+              <input type="number" id="set-soil-max" placeholder="Max" step="1">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="save-thresholds-btn"><i class="fas fa-save"></i> Save Thresholds</button>
+        </div>
+
+        <!-- Device -->
+        <div class="glass-card settings-section">
+          <h3><i class="fas fa-microchip"></i> Device Connection</h3>
+          <div class="setting-row">
+            <label>COM Port</label>
+            <div class="port-row">
+              <select id="port-select"><option value="">Select port…</option></select>
+              <button class="btn btn-small" id="refresh-ports-btn"><i class="fas fa-sync"></i></button>
+            </div>
+          </div>
+          <div class="setting-row btn-row">
+            <button class="btn btn-primary" id="connect-btn"><i class="fas fa-plug"></i> Connect</button>
+            <button class="btn btn-danger" id="disconnect-btn"><i class="fas fa-plug-circle-xmark"></i> Disconnect</button>
+          </div>
+          <div class="setting-row">
+            <label>Demo Mode</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="demo-toggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Preferences -->
+        <div class="glass-card settings-section">
+          <h3><i class="fas fa-palette"></i> Preferences</h3>
+          <div class="setting-row">
+            <label>Theme</label>
+            <div class="theme-options">
+              <button class="theme-btn" data-theme="dark" id="theme-dark-btn"><i class="fas fa-moon"></i> Dark</button>
+              <button class="theme-btn active" data-theme="light" id="theme-light-btn"><i class="fas fa-sun"></i> Light</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <label>Temperature Unit</label>
+            <div class="theme-options">
+              <button class="theme-btn active" id="unit-c-btn">°C</button>
+              <button class="theme-btn" id="unit-f-btn">°F</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <label>Sound Alerts</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="sound-toggle" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ PAGE: PROFILE ═══════════ -->
+    <section id="page-profile" class="page">
+      <h1 class="page-title"><i class="fas fa-user"></i> Profile <span class="page-subtitle">Your account</span></h1>
+
+      <div class="profile-grid">
+        <div class="glass-card profile-card">
+          <div class="profile-avatar"><i class="fas fa-user-circle"></i></div>
+          <h2 id="profile-name">User</h2>
+          <p id="profile-email">user@example.com</p>
+          <p class="profile-since">Member since <span id="profile-since">—</span></p>
+        </div>
+
+        <div class="glass-card settings-section">
+          <h3><i class="fas fa-key"></i> Change Password</h3>
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" id="current-password" placeholder="Enter current password">
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="new-password" placeholder="Enter new password">
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="confirm-new-password" placeholder="Confirm new password">
+          </div>
+          <button class="btn btn-primary" id="change-password-btn"><i class="fas fa-save"></i> Update Password</button>
+        </div>
+
+        <div class="glass-card" style="text-align:center;">
+          <button class="btn btn-danger btn-large" id="logout-btn-profile">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════ SIDEBAR OVERLAY (mobile) ═══════════ -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
